@@ -1,0 +1,29 @@
+{
+  "name": "things-scene-spc-control-chart",
+  "authors": [
+    "Stellan Gil <lotstar87@gmail.com>"
+  ],
+  "description": "",
+  "main": "things-scene-spc-control-chart.html",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.2.0",
+    "things-scene": "^0.5.3"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "things-scene-viewer": "ThingsElements/things-scene-viewer",
+    "things-scene-modeler": "ThingsElements/things-scene-modeler",
+    "things-designer-elements": "ThingsElements/things-designer-elements"
+  }
+}
