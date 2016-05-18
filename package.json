@@ -1,6 +1,6 @@
 {
   "name": "things-scene-spc-control-chart",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "browserify": {
@@ -30,5 +30,16 @@
   "license": "ISC",
   "directories": {
     "test": "test"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/heartyoh/things-scene.git"
+  },
+  "keywords": [
+    "2D",
+    "graphic",
+    "chart",
+    "library",
+    "canvas"
+  ]
 }

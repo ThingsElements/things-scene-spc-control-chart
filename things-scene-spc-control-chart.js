@@ -58,6 +58,94 @@ var SpcControlChart = function (_Container) {
   }
 
   _createClass(SpcControlChart, [{
+    key: '_drawPointsToXAxis',
+    value: function _drawPointsToXAxis(context) {
+
+      var xAxes = this.get('xAxes');
+      var yAxes = this.get('yAxes');
+
+      var series = this.get('series');
+      var data = this.get('data');
+
+      var xAxisLength = xAxes.axisLength;
+      var pointSpacing = xAxisLength / (data.length + 1);
+
+      series.forEach(function (s) {
+        data.forEach(function (d, i) {
+          var x = xAxes.points.origin + pointSpacing * (i + 1);
+          var y = yAxes.points.origin;
+          context.beginPath();
+          context.moveTo(x, y - 5);
+          context.lineTo(x, y + 5);
+          context.stroke();
+          context.closePath();
+
+          context.font = '9px';
+
+          var textMeasured = context.measureText(d[s.labelField]);
+          var textWidth = textMeasured.width / 2;
+          var textHeight = 14;
+
+          context.fillText(d[s.labelField], x - textWidth, y + textHeight);
+
+          xAxes['points'][d[s.labelField]] = x;
+        });
+      });
+
+      this.set('xAxes', xAxes);
+    }
+  }, {
+    key: '_drawPointsToYAxis',
+    value: function _drawPointsToYAxis(context) {
+
+      var xAxes = this.get('xAxes');
+      var yAxes = this.get('yAxes');
+
+      var series = this.get('series');
+      var data = this.get('data');
+
+      var yAxisLength = yAxes.axisLength;
+
+      var maxValue = yAxes.max || 0;
+      var minValue = yAxes.min || 0;
+
+      series.forEach(function (s) {
+        data.forEach(function (d, i) {
+          if (d[s.valueField] > maxValue) maxValue = d[s.valueField];
+        });
+      });
+
+      var pointSpacing = yAxisLength / (maxValue - minValue);
+      var valueStep = Math.ceil((maxValue - minValue) / 10);
+      var currPoint = yAxes.points.origin;
+
+      for (var i = 1; i < 11; i++) {
+        var pointVal = valueStep * i;
+
+        var x = xAxes.points.origin;
+        var y = yAxes.points.origin + yAxisLength / maxValue * pointVal;
+
+        context.beginPath();
+        context.moveTo(x - 5, y);
+        context.lineTo(x + 5, y);
+        context.stroke();
+        context.font = '9px';
+
+        var textMeasured = context.measureText(pointVal);
+        var textWidth = textMeasured.width + 10;
+        var textHeight = 4.5;
+
+        context.fillText(pointVal, x - textWidth, y + textHeight);
+        context.closePath();
+
+        yAxes['points'][pointVal] = y;
+      }
+
+      yAxes.maxValue = maxValue;
+
+      this.set('yAxes', yAxes);
+    }
+  }, {
     key: '_drawAxes',
     value: function _drawAxes(context) {
       var _model = this.model;
@@ -80,6 +168,8 @@ var SpcControlChart = function (_Container) {
 
       this._drawXAxis(context);
       this._drawYAxis(context);
+      this._drawPointsToXAxis(context);
+      this._drawPointsToYAxis(context);
     }
   }, {
     key: '_drawXAxis',
@@ -111,30 +201,14 @@ var SpcControlChart = function (_Container) {
       xAxes['points']['origin'] = left + 20;
       xAxes["axisLength"] = xAxisLength;
 
-      var pointSpacing = xAxisLength / (data.length + 1);
-
       context.beginPath();
-      context.moveTo(left, bottom - 20);
 
+      context.moveTo(left, bottom - 20);
       context.lineTo(right, bottom - 20);
 
       context.stroke();
 
       context.closePath();
-
-      series.forEach(function (s) {
-        data.forEach(function (d, i) {
-          var x = xAxes.points.origin + pointSpacing * (i + 1);
-          var y = bottom - 20;
-          context.beginPath();
-          context.moveTo(x, y - 5);
-          context.lineTo(x, y + 5);
-          context.stroke();
-          context.closePath();
-
-          xAxes['points'][d[s.labelField]] = x;
-        });
-      });
 
       this.set('xAxes', xAxes);
     }
@@ -167,38 +241,14 @@ var SpcControlChart = function (_Container) {
       yAxes['points']['origin'] = bottom - 20;
       yAxes["axisLength"] = yAxisLength;
 
-      var pointSpacing = yAxisLength / (data.length + 1);
-
       context.beginPath();
 
       context.moveTo(left + 20, top);
-
       context.lineTo(left + 20, bottom);
 
       context.stroke();
 
       context.closePath();
-
-      var maxValue = yAxes.max || 0;
-      var minValue = yAxes.min || 0;
-
-      series.forEach(function (s) {
-        data.forEach(function (d, i) {
-          if (d[s.valueField] > maxValue) maxValue = d[s.valueField];
-
-          var x = left + 20;
-          var y = yAxes.points.origin + pointSpacing * (i + 1);
-          // context.beginPath()
-          // context.moveTo(x-5, y)
-          // context.lineTo(x+5, y)
-          // context.stroke()
-          // context.closePath()
-          //
-          // yAxes['points'][d[s.valueField]] = y
-        });
-      });
-
-      yAxes.maxValue = maxValue;
 
       this.set('yAxes', yAxes);
     }

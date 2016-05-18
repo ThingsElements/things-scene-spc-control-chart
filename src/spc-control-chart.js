@@ -14,6 +14,95 @@ export default class SpcControlChart extends Container {
     // Object.assign(this, options)
   }
 
+  _drawPointsToXAxis(context) {
+
+    var xAxes = this.get('xAxes')
+    var yAxes = this.get('yAxes')
+
+    let series = this.get('series')
+    let data = this.get('data')
+
+    let xAxisLength = xAxes.axisLength
+    let pointSpacing = xAxisLength / (data.length + 1)
+
+    series.forEach(s => {
+      data.forEach((d, i) => {
+        let x = xAxes.points.origin + (pointSpacing * (i + 1))
+        let y = yAxes.points.origin
+        context.beginPath()
+        context.moveTo(x, y-5)
+        context.lineTo(x, y+5)
+        context.stroke()
+        context.closePath()
+
+        context.font = '9px'
+
+        let textMeasured = context.measureText(d[s.labelField])
+        let textWidth = textMeasured.width/2
+        let textHeight = 14
+
+        context.fillText(d[s.labelField], x-(textWidth), y + textHeight)
+
+        xAxes['points'][d[s.labelField]] = x
+      })
+    })
+
+
+    this.set('xAxes', xAxes)
+  }
+
+  _drawPointsToYAxis(context) {
+
+    var xAxes = this.get('xAxes')
+    var yAxes = this.get('yAxes')
+
+    let series = this.get('series')
+    let data = this.get('data')
+
+    let yAxisLength = yAxes.axisLength
+
+    var maxValue = yAxes.max || 0
+    var minValue = yAxes.min || 0
+
+    series.forEach(s => {
+      data.forEach((d, i) => {
+        if(d[s.valueField] > maxValue)
+          maxValue = d[s.valueField]
+      })
+    })
+
+    let pointSpacing = yAxisLength / (maxValue - minValue)
+    let valueStep = Math.ceil((maxValue - minValue) / 10)
+    var currPoint = yAxes.points.origin
+
+    for (var i = 1; i < 11; i ++) {
+      var pointVal = valueStep * i
+
+      let x = xAxes.points.origin
+      let y = yAxes.points.origin + (yAxisLength / maxValue) * pointVal
+
+      context.beginPath()
+      context.moveTo(x-5, y)
+      context.lineTo(x+5, y)
+      context.stroke()
+      context.font = '9px'
+
+      let textMeasured = context.measureText(pointVal)
+      let textWidth = textMeasured.width + 10
+      let textHeight = 4.5
+
+      context.fillText(pointVal, x-(textWidth), y + textHeight)
+      context.closePath()
+
+      yAxes['points'][pointVal] = y
+    }
+
+
+    yAxes.maxValue = maxValue
+
+    this.set('yAxes', yAxes)
+  }
+
   _drawAxes(context) {
 
     var { left, top, width, height, fillStyle } = this.model
@@ -31,6 +120,8 @@ export default class SpcControlChart extends Container {
 
     this._drawXAxis(context)
     this._drawYAxis(context)
+    this._drawPointsToXAxis(context)
+    this._drawPointsToYAxis(context)
   }
 
   _drawXAxis(context) {
@@ -56,32 +147,14 @@ export default class SpcControlChart extends Container {
     xAxes['points']['origin'] = left + 20
     xAxes["axisLength"] = xAxisLength
 
-    let pointSpacing = xAxisLength / (data.length + 1)
-
     context.beginPath()
-    context.moveTo(left, bottom-20)
 
+    context.moveTo(left, bottom-20)
     context.lineTo(right, bottom-20)
 
     context.stroke()
 
     context.closePath()
-
-
-
-    series.forEach(s => {
-      data.forEach((d, i) => {
-        let x = xAxes.points.origin + (pointSpacing * (i + 1))
-        let y = bottom-20
-        context.beginPath()
-        context.moveTo(x, y-5)
-        context.lineTo(x, y+5)
-        context.stroke()
-        context.closePath()
-
-        xAxes['points'][d[s.labelField]] = x
-      })
-    })
 
 
     this.set('xAxes', xAxes)
@@ -110,40 +183,15 @@ export default class SpcControlChart extends Container {
     yAxes['points']['origin'] = bottom - 20
     yAxes["axisLength"] = yAxisLength
 
-    let pointSpacing = yAxisLength / (data.length + 1)
-
 
     context.beginPath()
 
     context.moveTo(left+20, top)
-
     context.lineTo(left+20, bottom)
 
     context.stroke()
 
     context.closePath()
-
-    var maxValue = yAxes.max || 0
-    var minValue = yAxes.min || 0
-
-    series.forEach(s => {
-      data.forEach((d, i) => {
-        if(d[s.valueField] > maxValue)
-          maxValue = d[s.valueField]
-
-        let x = left + 20
-        let y = yAxes.points.origin + (pointSpacing * (i + 1))
-        // context.beginPath()
-        // context.moveTo(x-5, y)
-        // context.lineTo(x+5, y)
-        // context.stroke()
-        // context.closePath()
-        //
-        // yAxes['points'][d[s.valueField]] = y
-      })
-    })
-
-    yAxes.maxValue = maxValue
 
     this.set('yAxes', yAxes)
 
