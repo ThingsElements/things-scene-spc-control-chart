@@ -10,8 +10,26 @@ function rgba(r, g, b, a) {
 export default class SpcControlChart extends Container {
 
   constructor(model, context) {
+
     super(model, context)
-    // Object.assign(this, options)
+
+  }
+
+  _calcPointXCoord(label) {
+
+    let xAxes = this.get('xAxes')
+
+    return xAxes.points[label]
+
+  }
+
+  _calcPointYCoord(value) {
+
+    let yAxes = this.get('yAxes')
+
+    let originY = yAxes.points.origin
+
+    return originY - (yAxes.axisLength / yAxes.maxValue) * value
   }
 
   _drawPointsToXAxis(context) {
@@ -26,7 +44,9 @@ export default class SpcControlChart extends Container {
     let pointSpacing = xAxisLength / (data.length + 1)
 
     series.forEach(s => {
+
       data.forEach((d, i) => {
+
         let x = xAxes.points.origin + (pointSpacing * (i + 1))
         let y = yAxes.points.origin
         context.beginPath()
@@ -44,9 +64,10 @@ export default class SpcControlChart extends Container {
         context.fillText(d[s.labelField], x-(textWidth), y + textHeight)
 
         xAxes['points'][d[s.labelField]] = x
-      })
-    })
 
+      })
+
+    })
 
     this.set('xAxes', xAxes)
   }
@@ -65,21 +86,29 @@ export default class SpcControlChart extends Container {
     var minValue = yAxes.min || 0
 
     series.forEach(s => {
+
       data.forEach((d, i) => {
+
         if(d[s.valueField] > maxValue)
           maxValue = d[s.valueField]
+
       })
+
     })
+
+    yAxes.maxValue = maxValue
+    this.set('yAxes', yAxes)
 
     let pointSpacing = yAxisLength / (maxValue - minValue)
     let valueStep = Math.ceil((maxValue - minValue) / 10)
     var currPoint = yAxes.points.origin
 
     for (var i = 1; i < 11; i ++) {
+
       var pointVal = valueStep * i
 
       let x = xAxes.points.origin
-      let y = yAxes.points.origin + (yAxisLength / maxValue) * pointVal
+      let y = this._calcPointYCoord(pointVal)
 
       context.beginPath()
       context.moveTo(x-5, y)
@@ -95,33 +124,19 @@ export default class SpcControlChart extends Container {
       context.closePath()
 
       yAxes['points'][pointVal] = y
+
     }
-
-
-    yAxes.maxValue = maxValue
 
     this.set('yAxes', yAxes)
   }
 
   _drawAxes(context) {
 
-    var { left, top, width, height, fillStyle } = this.model
-
-    left = 30
-    top = 30
-
-    var right = left + width - 30
-    var bottom = top + height - 30
-
-
-    let series = this.get('series')
-    let xAxis = this.get('xAxes')
-    let data = this.get('data')
-
     this._drawXAxis(context)
     this._drawYAxis(context)
     this._drawPointsToXAxis(context)
     this._drawPointsToYAxis(context)
+
   }
 
   _drawXAxis(context) {
@@ -131,7 +146,7 @@ export default class SpcControlChart extends Container {
     let series = this.get('series')
     let data = this.get('data')
 
-    var { left, top, width, height, fillStyle } = this.model
+    var { left, top, width, height } = this.model
 
     left = 30
     top = 30
@@ -156,7 +171,6 @@ export default class SpcControlChart extends Container {
 
     context.closePath()
 
-
     this.set('xAxes', xAxes)
 
   }
@@ -167,15 +181,14 @@ export default class SpcControlChart extends Container {
     let series = this.get('series')
     let data = this.get('data')
 
-    var { left, top, width, height, fillStyle } = this.model
+    var { left, top, height } = this.model
 
     left = 30
     top = 30
 
-    var right = left + width - 60
     var bottom = top + height - 60
 
-    let yAxisLength = top - (bottom-20)
+    let yAxisLength = (bottom-20) - top
 
     if(!yAxes['points'])
       yAxes['points'] = {}
@@ -210,25 +223,179 @@ export default class SpcControlChart extends Container {
     let xLength = xAxes['axisLength']
     let yLength = yAxes['axisLength']
 
-    console.log("orgin", originX, originY)
-
     series.forEach(s => {
+
       context.beginPath()
+
+      context.lineCap = "round"
+      context.lineJoin = "round"
+
+      context.strokeStyle = rgba(100, 100, 100, 1)
+      if(s.styles && s.styles.background)
+        context.strokeStyle = s.styles.background
+
+      context.lineWidth = 1
+      if(s.styles && s.styles.background)
+        context.lineWidth = s.styles.lineWidth
+
+      let self = this
+
       context.moveTo(originX, originY)
       data.forEach(d => {
+
         let label = d[s.labelField]
         let value = d[s.valueField]
 
         let x = xAxes.points[label]
-        let y = originY + (yAxes.axisLength / yAxes.maxValue) * value
-
+        let y = self._calcPointYCoord(value)
 
         context.lineTo(x, y)
 
-        console.log(x, y)
       })
       context.stroke()
       context.closePath()
+
+    })
+
+  }
+
+  _drawSpcLimits(context) {
+
+    let spcLimit = this.get('spcLimit')
+
+    if(!spcLimit)
+      return
+
+    let specLimit = spcLimit.specLimit
+
+    if(!specLimit)
+      return
+
+    this._drawSpecLimit(context)
+
+    let controlLimit = spcLimit.controlLimit
+
+    if(!controlLimit)
+      return
+
+    this._drawControlLimit(context)
+  }
+
+  _drawSpcLines(context, fromX, toX, uVal, lVal) {
+
+    context.beginPath()
+
+    context.strokeStyle = rgba(100, 255, 100, 1)
+
+    var y = this._calcPointYCoord(lVal)
+
+    context.moveTo(fromX, y)
+    context.lineTo(toX, y)
+
+    context.stroke()
+
+    y = this._calcPointYCoord(uVal)
+
+    context.moveTo(fromX, y)
+    context.lineTo(toX, y)
+
+    context.stroke()
+
+    context.closePath()
+
+  }
+
+  _drawSpecLimit(context) {
+
+    let spcLimit = this.get('spcLimit')
+    let specLimit = spcLimit.specLimit
+
+    let upperLimit = specLimit.upper
+    let lowerLimit = specLimit.lower
+
+    if(!upperLimit || !lowerLimit)
+      return
+
+    let upperField = upperLimit.fieldName
+    let lowerField = lowerLimit.fieldName
+
+    if(!upperField || !lowerField)
+      return
+
+    let data = this.get('data')
+    let xAxes = this.get('xAxes')
+    let yAxes = this.get('yAxes')
+
+    let originX = xAxes.points.origin
+    let originY = yAxes.points.origin
+
+    let self = this
+
+    data.forEach(d => {
+      let uVal = d[upperField]
+      let lVal = d[lowerField]
+
+      let fromX = originX - 10
+      let toX = originX+xAxes.axisLength
+
+
+      self._drawSpcLines(context, fromX, toX, uVal, lVal)
+
+    })
+
+  }
+
+  _drawControlLimit(context) {
+
+    let spcLimit = this.get('spcLimit')
+    let controlLimit = spcLimit.controlLimit
+
+    let self = this
+
+    let data = this.get('data')
+    let xAxes = this.get('xAxes')
+    let yAxes = this.get('yAxes')
+    let series = this.get('series')
+
+    var xLabelWidth = 0
+
+    data.forEach((d, i) => {
+
+      if (xLabelWidth === 0) {
+        xLabelWidth = self._calcPointXCoord(Object.keys(xAxes.points)[1]) - xAxes.points.origin
+
+      }
+
+      var currX = self._calcPointXCoord(d[series[0].labelField])
+
+      controlLimit.forEach(cLimit => {
+
+        let upperLimit = cLimit.upper
+        let lowerLimit = cLimit.lower
+
+        if(!upperLimit || !lowerLimit)
+          return
+
+        let upperField = upperLimit.fieldName
+        let lowerField = lowerLimit.fieldName
+
+        if(!upperField || !lowerField)
+          return
+
+
+        let originX = xAxes.points.origin
+        let originY = yAxes.points.origin
+
+        let uVal = d[upperField]
+        let lVal = d[lowerField]
+
+        let fromX = currX - xLabelWidth / 2
+        let toX = currX + xLabelWidth / 2
+
+        self._drawSpcLines(context, fromX, toX, uVal, lVal)
+
+      })
+
     })
 
   }
@@ -239,6 +406,7 @@ export default class SpcControlChart extends Container {
 
     this._drawAxes(context)
     this._drawSeries(context)
+    this._drawSpcLimits(context)
 
   }
 

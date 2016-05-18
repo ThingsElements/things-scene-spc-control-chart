@@ -85,20 +85,68 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
             series : [{
               labelField : "x",
-              valueField : "y"
+              valueField : "y",
+              styles : {
+                background : '#ff6464',
+                lineWidth : 1
+              }
             }],
+            spcLimit : {
+              specLimit : {
+                upper : {
+                  fieldName : 'su',
+                  styles : {
+                    
+                  }
+                },
+                lower : {
+                  fieldName : 'sl'
+                }
+              },
+              controlLimit : [{
+                upper : {
+                  fieldName : 'cu1'
+                },
+                lower : {
+                  fieldName : 'cl1'
+                }
+              }, {
+                upper : {
+                  fieldName : 'cu2'
+                },
+                lower : {
+                  fieldName : 'cl2'
+                }
+              }]
+            },
             data : [{
               x : 'Monday',
-              y : 20
+              y : 20,
+              su : 60,
+              sl: 20,
+              cu1 : 50,
+              cl1 : 30
             }, {
               x : 'Tuesday',
-              y : 50
+              y : 50,
+              su : 60,
+              sl: 20,
+              cu1 : 50,
+              cl1 : 30
             }, {
               x : 'Wednesday',
-              y : 30
+              y : 30,
+              su : 60,
+              sl: 20,
+              cu1 : 50,
+              cl1 : 30
             }, {
               x : 'Thursday',
-              y : 80
+              y : 80,
+              su : 60,
+              sl: 20,
+              cu1 : 45,
+              cl1 : 35
             }]
           }]
         }

@@ -54,10 +54,27 @@ var SpcControlChart = function (_Container) {
     _classCallCheck(this, SpcControlChart);
 
     return _possibleConstructorReturn(this, Object.getPrototypeOf(SpcControlChart).call(this, model, context));
-    // Object.assign(this, options)
   }
 
   _createClass(SpcControlChart, [{
+    key: '_calcPointXCoord',
+    value: function _calcPointXCoord(label) {
+
+      var xAxes = this.get('xAxes');
+
+      return xAxes.points[label];
+    }
+  }, {
+    key: '_calcPointYCoord',
+    value: function _calcPointYCoord(value) {
+
+      var yAxes = this.get('yAxes');
+
+      var originY = yAxes.points.origin;
+
+      return originY - yAxes.axisLength / yAxes.maxValue * value;
+    }
+  }, {
     key: '_drawPointsToXAxis',
     value: function _drawPointsToXAxis(context) {
 
@@ -71,7 +88,9 @@ var SpcControlChart = function (_Container) {
       var pointSpacing = xAxisLength / (data.length + 1);
 
       series.forEach(function (s) {
+
         data.forEach(function (d, i) {
+
           var x = xAxes.points.origin + pointSpacing * (i + 1);
           var y = yAxes.points.origin;
           context.beginPath();
@@ -110,20 +129,26 @@ var SpcControlChart = function (_Container) {
       var minValue = yAxes.min || 0;
 
       series.forEach(function (s) {
+
         data.forEach(function (d, i) {
+
           if (d[s.valueField] > maxValue) maxValue = d[s.valueField];
         });
       });
+
+      yAxes.maxValue = maxValue;
+      this.set('yAxes', yAxes);
 
       var pointSpacing = yAxisLength / (maxValue - minValue);
       var valueStep = Math.ceil((maxValue - minValue) / 10);
       var currPoint = yAxes.points.origin;
 
       for (var i = 1; i < 11; i++) {
+
         var pointVal = valueStep * i;
 
         var x = xAxes.points.origin;
-        var y = yAxes.points.origin + yAxisLength / maxValue * pointVal;
+        var y = this._calcPointYCoord(pointVal);
 
         context.beginPath();
         context.moveTo(x - 5, y);
@@ -141,30 +166,11 @@ var SpcControlChart = function (_Container) {
         yAxes['points'][pointVal] = y;
       }
 
-      yAxes.maxValue = maxValue;
-
       this.set('yAxes', yAxes);
     }
   }, {
     key: '_drawAxes',
     value: function _drawAxes(context) {
-      var _model = this.model;
-      var left = _model.left;
-      var top = _model.top;
-      var width = _model.width;
-      var height = _model.height;
-      var fillStyle = _model.fillStyle;
-
-
-      left = 30;
-      top = 30;
-
-      var right = left + width - 30;
-      var bottom = top + height - 30;
-
-      var series = this.get('series');
-      var xAxis = this.get('xAxes');
-      var data = this.get('data');
 
       this._drawXAxis(context);
       this._drawYAxis(context);
@@ -180,12 +186,11 @@ var SpcControlChart = function (_Container) {
       var series = this.get('series');
       var data = this.get('data');
 
-      var _model2 = this.model;
-      var left = _model2.left;
-      var top = _model2.top;
-      var width = _model2.width;
-      var height = _model2.height;
-      var fillStyle = _model2.fillStyle;
+      var _model = this.model;
+      var left = _model.left;
+      var top = _model.top;
+      var width = _model.width;
+      var height = _model.height;
 
 
       left = 30;
@@ -220,21 +225,18 @@ var SpcControlChart = function (_Container) {
       var series = this.get('series');
       var data = this.get('data');
 
-      var _model3 = this.model;
-      var left = _model3.left;
-      var top = _model3.top;
-      var width = _model3.width;
-      var height = _model3.height;
-      var fillStyle = _model3.fillStyle;
+      var _model2 = this.model;
+      var left = _model2.left;
+      var top = _model2.top;
+      var height = _model2.height;
 
 
       left = 30;
       top = 30;
 
-      var right = left + width - 60;
       var bottom = top + height - 60;
 
-      var yAxisLength = top - (bottom - 20);
+      var yAxisLength = bottom - 20 - top;
 
       if (!yAxes['points']) yAxes['points'] = {};
 
@@ -255,6 +257,7 @@ var SpcControlChart = function (_Container) {
   }, {
     key: '_drawSeries',
     value: function _drawSeries(context) {
+      var _this2 = this;
 
       var xAxes = this.get('xAxes');
       var yAxes = this.get('yAxes');
@@ -266,24 +269,163 @@ var SpcControlChart = function (_Container) {
       var xLength = xAxes['axisLength'];
       var yLength = yAxes['axisLength'];
 
-      console.log("orgin", originX, originY);
-
       series.forEach(function (s) {
+
         context.beginPath();
+
+        context.lineCap = "round";
+        context.lineJoin = "round";
+
+        context.strokeStyle = rgba(100, 100, 100, 1);
+        if (s.styles && s.styles.background) context.strokeStyle = s.styles.background;
+
+        context.lineWidth = 1;
+        if (s.styles && s.styles.background) context.lineWidth = s.styles.lineWidth;
+
+        var self = _this2;
+
         context.moveTo(originX, originY);
         data.forEach(function (d) {
+
           var label = d[s.labelField];
           var value = d[s.valueField];
 
           var x = xAxes.points[label];
-          var y = originY + yAxes.axisLength / yAxes.maxValue * value;
+          var y = self._calcPointYCoord(value);
 
           context.lineTo(x, y);
-
-          console.log(x, y);
         });
         context.stroke();
         context.closePath();
+      });
+    }
+  }, {
+    key: '_drawSpcLimits',
+    value: function _drawSpcLimits(context) {
+
+      var spcLimit = this.get('spcLimit');
+
+      if (!spcLimit) return;
+
+      var specLimit = spcLimit.specLimit;
+
+      if (!specLimit) return;
+
+      this._drawSpecLimit(context);
+
+      var controlLimit = spcLimit.controlLimit;
+
+      if (!controlLimit) return;
+
+      this._drawControlLimit(context);
+    }
+  }, {
+    key: '_drawSpcLines',
+    value: function _drawSpcLines(context, fromX, toX, uVal, lVal) {
+
+      context.beginPath();
+
+      context.strokeStyle = rgba(100, 255, 100, 1);
+
+      var y = this._calcPointYCoord(lVal);
+
+      context.moveTo(fromX, y);
+      context.lineTo(toX, y);
+
+      context.stroke();
+
+      y = this._calcPointYCoord(uVal);
+
+      context.moveTo(fromX, y);
+      context.lineTo(toX, y);
+
+      context.stroke();
+
+      context.closePath();
+    }
+  }, {
+    key: '_drawSpecLimit',
+    value: function _drawSpecLimit(context) {
+
+      var spcLimit = this.get('spcLimit');
+      var specLimit = spcLimit.specLimit;
+
+      var upperLimit = specLimit.upper;
+      var lowerLimit = specLimit.lower;
+
+      if (!upperLimit || !lowerLimit) return;
+
+      var upperField = upperLimit.fieldName;
+      var lowerField = lowerLimit.fieldName;
+
+      if (!upperField || !lowerField) return;
+
+      var data = this.get('data');
+      var xAxes = this.get('xAxes');
+      var yAxes = this.get('yAxes');
+
+      var originX = xAxes.points.origin;
+      var originY = yAxes.points.origin;
+
+      var self = this;
+
+      data.forEach(function (d) {
+        var uVal = d[upperField];
+        var lVal = d[lowerField];
+
+        var fromX = originX - 10;
+        var toX = originX + xAxes.axisLength;
+
+        self._drawSpcLines(context, fromX, toX, uVal, lVal);
+      });
+    }
+  }, {
+    key: '_drawControlLimit',
+    value: function _drawControlLimit(context) {
+
+      var spcLimit = this.get('spcLimit');
+      var controlLimit = spcLimit.controlLimit;
+
+      var self = this;
+
+      var data = this.get('data');
+      var xAxes = this.get('xAxes');
+      var yAxes = this.get('yAxes');
+      var series = this.get('series');
+
+      var xLabelWidth = 0;
+
+      data.forEach(function (d, i) {
+
+        if (xLabelWidth === 0) {
+          xLabelWidth = self._calcPointXCoord(Object.keys(xAxes.points)[1]) - xAxes.points.origin;
+        }
+
+        var currX = self._calcPointXCoord(d[series[0].labelField]);
+
+        controlLimit.forEach(function (cLimit) {
+
+          var upperLimit = cLimit.upper;
+          var lowerLimit = cLimit.lower;
+
+          if (!upperLimit || !lowerLimit) return;
+
+          var upperField = upperLimit.fieldName;
+          var lowerField = lowerLimit.fieldName;
+
+          if (!upperField || !lowerField) return;
+
+          var originX = xAxes.points.origin;
+          var originY = yAxes.points.origin;
+
+          var uVal = d[upperField];
+          var lVal = d[lowerField];
+
+          var fromX = currX - xLabelWidth / 2;
+          var toX = currX + xLabelWidth / 2;
+
+          self._drawSpcLines(context, fromX, toX, uVal, lVal);
+        });
       });
     }
   }, {
@@ -294,6 +436,7 @@ var SpcControlChart = function (_Container) {
 
       this._drawAxes(context);
       this._drawSeries(context);
+      this._drawSpcLimits(context);
     }
   }, {
     key: 'contains',
@@ -325,10 +468,10 @@ var SpcControlChart = function (_Container) {
 
       var point = this.transcoordC2S(e.offsetX, e.offsetY);
 
-      var _model4 = this.model;
-      var left = _model4.left;
-      var top = _model4.top;
-      var width = _model4.width;
+      var _model3 = this.model;
+      var left = _model3.left;
+      var top = _model3.top;
+      var width = _model3.width;
 
 
       var right = left + width;
